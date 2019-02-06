@@ -28,7 +28,7 @@
 #
 # Example:
 #
-#   In [1]: compute_utility_2019('labels', 'predictions')
+#   In [1]: compute_utility_2019('labels', 'predictions', 'output.psv')
 #   Out[1]: auroc, auprc, accuracy, f_measure, utility
 
 import numpy as np, os, os.path, sys, argparse
@@ -53,14 +53,14 @@ def compute_scores_2019(label_directory, prediction_directory):
     label_files = []
     for filename in os.listdir(label_directory):
         full_filename = os.path.join(label_directory, filename)
-        if os.path.isfile(full_filename) and full_filename.endswith('.dat'):
+        if os.path.isfile(full_filename) and full_filename.endswith('.psv'):
             label_files.append(filename)
     label_files = sorted(label_files)
 
     prediction_files = []
     for filename in os.listdir(prediction_directory):
         full_filename = os.path.join(prediction_directory, filename)
-        if os.path.isfile(full_filename) and full_filename.endswith('.dat'):
+        if os.path.isfile(full_filename) and full_filename.endswith('.psv'):
             prediction_files.append(filename)
     prediction_files = sorted(prediction_files)
 

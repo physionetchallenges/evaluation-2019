@@ -23,7 +23,7 @@
 %
 % Example:
 %
-%   >> compute_scores_2019('labels', 'results', 'output.dat')
+%   >> compute_scores_2019('labels', 'results', 'output.psv')
 
 function compute_scores_2019(label_directory, prediction_directory, output_file)
 
@@ -42,7 +42,7 @@ u_fp     = -0.05;
 u_tn     = 0;
 
 % Find label and prediction files.
-files = dir(fullfile(label_directory, '*.dat'));
+files = dir(fullfile(label_directory, '*.psv'));
 num_files = length(files);
 
 label_files = cell(1, num_files);
@@ -50,7 +50,7 @@ for k = 1 : num_files
     label_files{k} = char(files(k).name);
 end
 
-files = dir(fullfile(prediction_directory, '*.dat'));
+files = dir(fullfile(prediction_directory, '*.psv'));
 num_files = length(files);
 
 prediction_files = cell(1, num_files);
