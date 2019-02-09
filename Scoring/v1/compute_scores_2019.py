@@ -3,10 +3,10 @@
 # This file contains functions for computing scores for the 2019 PhysioNet/CinC
 # challenge.
 #
-# Written by M. Reyna on 1 February 2019.  Last updated on 2 February 2019.
+# Written by M. Reyna on 1 February 2019.  Last updated on 9 February 2019.
 #
-# The compute_utility_2019 function computes a normalized utility score for a
-# cohort of patients.
+# The compute_scores_2019 function computes a normalized utility score for a
+# cohort of patients as well as several traditional scoring metrics.
 #
 # Inputs:
 #   'labels_directory' is a directory of pipe-delimited text files containing a
@@ -20,7 +20,7 @@
 #   every label.
 #
 #   Note: Currently, filenames in labels_directory and predictions_directory
-#   must be the same, and the extension must be .dat.
+#   must be the same, and the extension must be .psv.
 #
 # Output:
 #   'output_file' is a pipe-delimited text file (optional) that gives AUROC,
@@ -28,7 +28,7 @@
 #
 # Example:
 #
-#   In [1]: compute_utility_2019('labels', 'predictions', 'output.psv')
+#   In [1]: compute_scores_2019('labels', 'predictions')
 #   Out[1]: auroc, auprc, accuracy, f_measure, utility
 
 import numpy as np, os, os.path, sys, argparse
@@ -142,8 +142,6 @@ def compute_scores_2019(label_directory, prediction_directory):
     unnormalized_best_utility     = np.sum(best_utilities)
     unnormalized_worst_utility    = np.sum(worst_utilities)
     unnormalized_inaction_utility = np.sum(inaction_utilities)
-
-    print unnormalized_observed_utility,    unnormalized_best_utility,    unnormalized_worst_utility,     unnormalized_inaction_utility
 
     if not (unnormalized_worst_utility <= unnormalized_best_utility and unnormalized_inaction_utility <= unnormalized_best_utility):
         raise Exception('Optimal utility must be higher than inaction utility.')

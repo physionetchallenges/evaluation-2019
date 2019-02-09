@@ -1,10 +1,10 @@
 % This file contains functions for computing scores for the 2019 PhysioNet/CinC
 % challenge.
 %
-% Written by M. Reyna on 1 February 2019.  Last updated on 2 February 2019.
+% Written by M. Reyna on 1 February 2019.  Last updated on 9 February 2019.
 %
 % The compute_utility_2019 function computes a normalized utility score for a
-% cohort of patients.
+% cohort of patients as well as several traditional scoring metrics.
 %
 % Inputs:
 %   'labels_directory' is a directory of pipe-delimited text files containing a
@@ -23,7 +23,12 @@
 %
 % Example:
 %
-%   >> compute_scores_2019('labels', 'results', 'output.psv')
+%   >> [auroc, auprc, accuracy, f_measure, utility] = compute_scores_2019('labels', 'predictions')
+%   auroc = ...
+%   auprc = ...
+%   accuracy = ...
+%   f_measure = ...
+%   utility = ...
 
 function compute_scores_2019(label_directory, prediction_directory, output_file)
 
@@ -187,7 +192,7 @@ end
 %   Omitted.
 
 function column = load_column(filename, header)
-tbl  = readtable(filename);
+tbl  = readtable(filename, 'FileType', 'text', 'Delimiter', '|');
 if size(tbl)
     column = table2array(tbl(:, header));
 else
