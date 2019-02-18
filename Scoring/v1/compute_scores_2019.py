@@ -3,7 +3,7 @@
 # This file contains functions for computing scores for the 2019 PhysioNet/CinC
 # challenge.
 #
-# Written by M. Reyna on 1 February 2019.  Last updated on 9 February 2019.
+# Written by M. Reyna on 1 February 2019.  Last updated on 18 February 2019.
 #
 # The compute_scores_2019 function computes a normalized utility score for a
 # cohort of patients as well as several traditional scoring metrics.
@@ -129,8 +129,10 @@ def compute_scores_2019(label_directory, prediction_directory):
         inaction_predictions = np.zeros(num_records)
 
         if any(labels):
-            t_sepsis = min(i for i, label in enumerate(labels) if label)
-            best_predictions[max(0, t_sepsis + dt_early + 1) : min(t_sepsis + dt_late + 1, num_records - 1)] = 1
+            t_sepsis = min(i for i, label in enumerate(labels) if label) - dt_optimal
+            best_predictions[max(0, t_sepsis + dt_early) : min(t_sepsis + dt_late, num_records)] = 1
+        else:
+            best_predictions[:] = 0
         worst_predictions = 1 - best_predictions
 
         observed_utilities[k] = compute_prediction_utility(labels, observed_predictions, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn)
@@ -434,7 +436,7 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
     # Does the patient eventually have sepsis?
     if any(labels):
         is_septic = True
-        t_sepsis = min(i for i, label in enumerate(labels) if label)
+        t_sepsis = min(i for i, label in enumerate(labels) if label) - dt_optimal
     else:
         is_septic = False
         t_sepsis = float('inf')

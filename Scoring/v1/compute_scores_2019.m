@@ -1,7 +1,7 @@
 % This file contains functions for computing scores for the 2019 PhysioNet/CinC
 % challenge.
 %
-% Written by M. Reyna on 1 February 2019.  Last updated on 9 February 2019.
+% Written by M. Reyna on 1 February 2019.  Last updated on 18 February 2019.
 %
 % The compute_utility_2019 function computes a normalized utility score for a
 % cohort of patients as well as several traditional scoring metrics.
@@ -141,8 +141,10 @@ for k = 1 : num_files
     inaction_predictions = zeros(1, num_records);
 
     if any(labels)
-        t_sepsis = find(labels == 1, 1);
+        t_sepsis = find(labels == 1, 1) - dt_optimal;
         best_predictions(max(1, t_sepsis + dt_early) : min(t_sepsis + dt_late, num_records)) = 1;
+    else
+        best_predictions(:) = 0;
     end
     worst_predictions = 1 - best_predictions;
 
@@ -489,7 +491,7 @@ end
 % Does the patient eventually have sepsis?
 if any(labels)
     is_septic = true;
-    t_sepsis = find(labels == 1, 1);
+    t_sepsis = find(labels == 1, 1) - dt_optimal;
 else
     is_septic = false;
     t_sepsis = inf;
