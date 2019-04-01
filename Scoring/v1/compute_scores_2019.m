@@ -1,8 +1,6 @@
 % This file contains functions for computing scores for the 2019 PhysioNet/CinC
 % challenge.
 %
-% Written by M. Reyna on 1 February 2019.  Last updated on 18 February 2019.
-%
 % The compute_utility_2019 function computes a normalized utility score for a
 % cohort of patients as well as several traditional scoring metrics.
 %
@@ -280,8 +278,8 @@ for j = 1 : m
     if j == 1
         tp(j) = 0;
         fp(j) = 0;
-        fn(j) = sum(labels(:) == 1);
-        tn(j) = sum(labels(:) == 0);
+        fn(j) = sum(labels);
+        tn(j) = n - fn(j);
     else
         tp(j) = tp(j - 1);
         fp(j) = fp(j - 1);
@@ -401,9 +399,9 @@ tn = 0;
 for i = 1 : n
     if labels(i) == 1 && predictions(i) == 1
         tp = tp + 1;
-    elseif labels(i) == 1 && predictions(i) == 0
-        fp = fp + 1;
     elseif labels(i) == 0 && predictions(i) == 1
+        fp = fp + 1;
+    elseif labels(i) == 1 && predictions(i) == 0
         fn = fn + 1;
     elseif labels(i) == 0 && predictions(i) == 0
         tn = tn + 1;

@@ -318,7 +318,7 @@ def compute_auc(labels, predictions):
 # Example:
 #   In [1]: labels = [0, 0, 0, 0, 1, 1]
 #   In [2]: predictions = [0, 0, 1, 1, 1, 1]
-#   In [3]: accuracy, f_measure = compute_prediction_utility(labels, predictions)
+#   In [3]: accuracy, f_measure = compute_accuracy_f_measure(labels, predictions)
 #   In [4]: accuracy
 #   Out[4]: 0.666666666667
 #   In [5]: f_measure
@@ -347,9 +347,9 @@ def compute_accuracy_f_measure(labels, predictions):
     for i in range(n):
         if labels[i] and predictions[i]:
             tp += 1
-        elif labels[i] and not predictions[i]:
-            fp += 1
         elif not labels[i] and predictions[i]:
+            fp += 1
+        elif labels[i] and not predictions[i]:
             fn += 1
         elif not labels[i] and not predictions[i]:
             tn += 1
@@ -458,5 +458,8 @@ if __name__=='__main__':
     auroc, auprc, accuracy, f_measure, utility = evaluate_scores(sys.argv[1], sys.argv[2])
 
     output_string = 'AUROC|AUPRC|Accuracy|F-measure|Utility\n{}|{}|{}|{}|{}'.format(auroc, auprc, accuracy, f_measure, utility)
-    with open(sys.argv[3], 'w') as f:
-        f.write(output_string)
+    if len(sys.argv) > 3:
+        with open(sys.argv[3], 'w') as f:
+            f.write(output_string)
+    else:
+        print(output_string)

@@ -3,8 +3,6 @@
 # This file contains functions for computing scores for the 2019 PhysioNet/CinC
 # challenge.
 #
-# Written by M. Reyna on 1 February 2019.  Last updated on 18 February 2019.
-#
 # The compute_scores_2019 function computes a normalized utility score for a
 # cohort of patients as well as several traditional scoring metrics.
 #
@@ -27,7 +25,6 @@
 #   AUPRC, accuracy, F-measure, and utility scores for a cohort of patients.
 #
 # Example:
-#
 #   In [1]: compute_scores_2019('labels', 'predictions')
 #   Out[1]: auroc, auprc, accuracy, f_measure, utility
 
@@ -128,11 +125,9 @@ def compute_scores_2019(label_directory, prediction_directory):
         worst_predictions    = np.zeros(num_records)
         inaction_predictions = np.zeros(num_records)
 
-        if any(labels):
-            t_sepsis = min(i for i, label in enumerate(labels) if label) - dt_optimal
-            best_predictions[max(0, t_sepsis + dt_early) : min(t_sepsis + dt_late, num_records)] = 1
-        else:
-            best_predictions[:] = 0
+        if np.any(labels):
+            t_sepsis = np.argmax(labels) - dt_optimal
+            best_predictions[max(0, t_sepsis + dt_early) : min(t_sepsis + dt_late + 1, num_records)] = 1
         worst_predictions = 1 - best_predictions
 
         observed_utilities[k] = compute_prediction_utility(labels, observed_predictions, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn)
@@ -263,8 +258,8 @@ def compute_auc(labels, predictions):
         if j == 0:
             tp[j] = 0
             fp[j] = 0
-            fn[j] = np.sum(labels == 1)
-            tn[j] = np.sum(labels == 0)
+            fn[j] = np.sum(labels)
+            tn[j] = n - fn[j]
         else:
             tp[j] = tp[j - 1]
             fp[j] = fp[j - 1]
@@ -340,7 +335,7 @@ def compute_auc(labels, predictions):
 # Example:
 #   In [1]: labels = [0, 0, 0, 0, 1, 1]
 #   In [2]: predictions = [0, 0, 1, 1, 1, 1]
-#   In [3]: accuracy, f_measure = compute_prediction_utility(labels, predictions)
+#   In [3]: accuracy, f_measure = compute_accuracy_f_measure(labels, predictions)
 #   In [4]: accuracy
 #   Out[4]: 0.666666666667
 #   In [5]: f_measure
@@ -369,9 +364,9 @@ def compute_accuracy_f_measure(labels, predictions):
     for i in range(n):
         if labels[i] and predictions[i]:
             tp += 1
-        elif labels[i] and not predictions[i]:
-            fp += 1
         elif not labels[i] and predictions[i]:
+            fp += 1
+        elif labels[i] and not predictions[i]:
             fn += 1
         elif not labels[i] and not predictions[i]:
             tn += 1
@@ -434,9 +429,9 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
         raise Exception('The optimal time for predictions must be before the latest beneficial time.')
 
     # Does the patient eventually have sepsis?
-    if any(labels):
+    if np.any(labels):
         is_septic = True
-        t_sepsis = min(i for i, label in enumerate(labels) if label) - dt_optimal
+        t_sepsis = np.argmax(labels) - dt_optimal
     else:
         is_septic = False
         t_sepsis = float('inf')
