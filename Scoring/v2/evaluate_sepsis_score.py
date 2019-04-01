@@ -203,19 +203,19 @@ def load_column(filename, header, delimiter):
 #   In [5]: auprc
 #   Out[5]: 1.0
 
-def compute_auc(labels, predictions):
+def compute_auc(labels, predictions, check_errors=True):
     # Check inputs for errors.
-    if len(predictions) != len(labels):
-        raise Exception('Numbers of predictions and labels must be the same.')
+    if check_errors:
+        if len(predictions) != len(labels):
+            raise Exception('Numbers of predictions and labels must be the same.')
 
-    n = len(labels)
-    for i in range(n):
-        if not labels[i] in (0, 1):
-            raise Exception('Labels must satisfy label == 0 or label == 1.')
+        for label in labels:
+            if not label in (0, 1):
+                raise Exception('Labels must satisfy label == 0 or label == 1.')
 
-    for i in range(n):
-        if not 0 <= predictions[i] <= 1:
-            raise Exception('Predictions must satisfy 0 <= prediction <= 1.')
+        for prediction in predictions:
+            if not 0 <= prediction <= 1:
+                raise Exception('Predictions must satisfy 0 <= prediction <= 1.')
 
     # Find prediction thresholds.
     thresholds = np.unique(predictions)[::-1]
@@ -224,6 +224,8 @@ def compute_auc(labels, predictions):
 
     if thresholds[-1] != 0:
         thresholds = np.concatenate((thresholds, np.array([0])))
+
+    n = len(labels)
     m = len(thresholds)
 
     # Populate contingency table across prediction thresholds.
@@ -324,21 +326,22 @@ def compute_auc(labels, predictions):
 #   In [5]: f_measure
 #   Out[5]: 0.666666666667
 
-def compute_accuracy_f_measure(labels, predictions):
+def compute_accuracy_f_measure(labels, predictions, check_errors=True):
     # Check inputs for errors.
-    if len(predictions) != len(labels):
-        raise Exception('Numbers of predictions and labels must be the same.')
+    if check_errors:
+        if len(predictions) != len(labels):
+            raise Exception('Numbers of predictions and labels must be the same.')
 
-    n = len(labels)
-    for i in range(n):
-        if not labels[i] in (0, 1):
-            raise Exception('Labels must satisfy label == 0 or label == 1.')
+        for label in labels:
+            if not label in (0, 1):
+                raise Exception('Labels must satisfy label == 0 or label == 1.')
 
-    for i in range(n):
-        if not predictions[i] in (0, 1):
-            raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
+        for prediction in predictions:
+            if not prediction in (0, 1):
+                raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
 
     # Populate contingency table.
+    n = len(labels)
     tp = 0
     fp = 0
     fn = 0
@@ -391,25 +394,25 @@ def compute_accuracy_f_measure(labels, predictions):
 #   In [4]: utility
 #   Out[4]: 0.444444444444
 
-def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6, dt_late=3.0, max_u_tp=1, min_u_fn=-2, u_fp=-0.05, u_tn=0):
+def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6, dt_late=3.0, max_u_tp=1, min_u_fn=-2, u_fp=-0.05, u_tn=0, check_errors=True):
     # Check inputs for errors.
-    if len(predictions) != len(labels):
-        raise Exception('Numbers of predictions and labels must be the same.')
+    if check_errors:
+        if len(predictions) != len(labels):
+            raise Exception('Numbers of predictions and labels must be the same.')
 
-    n = len(labels)
-    for i in range(n):
-        if not labels[i] in (0, 1):
-            raise Exception('Labels must satisfy label == 0 or label == 1.')
+        for label in labels:
+            if not label in (0, 1):
+                raise Exception('Labels must satisfy label == 0 or label == 1.')
 
-    for i in range(n):
-        if not predictions[i] in (0, 1):
-            raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
+        for prediction in predictions:
+            if not prediction in (0, 1):
+                raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
 
-    if dt_early >= dt_optimal:
-        raise Exception('The earliest beneficial time for predictions must be before the optimal time.')
+        if dt_early >= dt_optimal:
+            raise Exception('The earliest beneficial time for predictions must be before the optimal time.')
 
-    if dt_optimal >= dt_late:
-        raise Exception('The optimal time for predictions must be before the latest beneficial time.')
+        if dt_optimal >= dt_late:
+            raise Exception('The optimal time for predictions must be before the latest beneficial time.')
 
     # Does the patient eventually have sepsis?
     if np.any(labels):
@@ -418,6 +421,8 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
     else:
         is_septic = False
         t_sepsis = float('inf')
+
+    n = len(labels)
 
     # Define slopes and intercept points for affine utility functions of the
     # form u = m * t + b.
@@ -454,7 +459,7 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
     # Find total utility for patient.
     return np.sum(u)
 
-if __name__=='__main__':
+if __name__ == '__main__':
     auroc, auprc, accuracy, f_measure, utility = evaluate_scores(sys.argv[1], sys.argv[2])
 
     output_string = 'AUROC|AUPRC|Accuracy|F-measure|Utility\n{}|{}|{}|{}|{}'.format(auroc, auprc, accuracy, f_measure, utility)
