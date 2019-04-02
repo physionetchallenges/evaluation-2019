@@ -6,5 +6,6 @@ MAINTAINER author@sample.com
 RUN pip install -r requirements.txt
 
 ## ADD
-ADD get_sepsis_score.py /physionet2019
+RUN mkdir /physionet2019
+COPY ./ /physionet2019
 WORKDIR /physionet2019
