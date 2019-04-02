@@ -388,11 +388,11 @@ def compute_accuracy_f_measure(labels, predictions, check_errors=True):
 #   classifier using its binarized predictions.
 #
 # Example:
-#   In [1]: labels = [0 0 0 0 1 1]
-#   In [2]: predictions = [0 0 1 1 1 1]
+#   In [1]: labels = [0, 0, 0, 0, 1, 1]
+#   In [2]: predictions = [0, 0, 1, 1, 1, 1]
 #   In [3]: utility = compute_prediction_utility(labels, predictions)
 #   In [4]: utility
-#   Out[4]: 0.444444444444
+#   Out[4]: 3.388888888888889
 
 def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6, dt_late=3.0, max_u_tp=1, min_u_fn=-2, u_fp=-0.05, u_tn=0, check_errors=True):
     # Check inputs for errors.
