@@ -443,7 +443,7 @@ end
 %   >> labels = [0; 0; 0; 0; 1; 1]
 %   >> predictions = [0 0 1 1 1 1]
 %   >> utility = compute_prediction_utility(labels, predictions)
-%   utility = 0.44444
+%   utility = 3.3889
 
 function utility = compute_prediction_utility(labels, predictions, dt_early,dt_optimal,...
                                               dt_late, max_u_tp, min_u_fn, u_fp, u_tn)
