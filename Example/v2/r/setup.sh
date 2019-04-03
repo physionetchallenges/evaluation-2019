@@ -9,4 +9,4 @@
 set -e
 set -o pipefail
 
-chmod a+x ./get_sepsis_score.py
+chmod a+x ./get_sepsis_score.r

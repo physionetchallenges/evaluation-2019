@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 get_sepsis_score = function(data){
     x_mean = c(
         83.8996, 97.0520,  36.8055,  126.2240, 86.2907,
@@ -70,7 +72,6 @@ read_challenge_data = function(input_file){
     }
 
 # load library and arguments
-suppressPackageStartupMessages(library(zip))
 args = commandArgs(trailingOnly=TRUE)
 
 # get input filenames
@@ -104,6 +105,6 @@ for (i in 1:n){
 }
 
 # perform clean-up
-zipr(args[2], files = unlist(output_files))
+zip(args[2], files = unlist(output_files))
 unlink(tmp_input_dir, recursive=TRUE)
 unlink(tmp_output_dir, recursive=TRUE)
