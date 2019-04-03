@@ -18,13 +18,15 @@ set -o pipefail
 
 RECORD=$1
 
+zip -q -0 input.zip "$RECORD.psv"
+
 # Example (Matlab)
 matlab -nodisplay -r \
-    "try [scores, labels] = GetSepsisScore('$RECORD.psv'); \
-     dlmwrite('$RECORD.out', [scores labels], '|'); \
+    "try get_sepsis_score('input.zip', 'output.zip'); \
      catch e; display(getReport(e)); exit(1); end; quit"
 
 # Example (Octave)
 #octave -q -f --eval \
-#    "[scores, labels] = GetSepsisScore('$RECORD.psv');
-#     dlmwrite('$RECORD.out', [scores labels], '|');"
+#    "get_sepsis_score('input.zip', 'output.zip')"
+
+unzip -p output.zip "*/$RECORD.psv" > "$RECORD.out"

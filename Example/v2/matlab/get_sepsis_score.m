@@ -3,7 +3,7 @@ function get_sepsis_score(input_zip_file, output_zip_file)
     input_files = sort(unzip(input_zip_file, 'tmp_inputs'));
     j = 1;
     for i = 1 : length(input_files)
-        if ~isfile(input_files(j))
+        if exist(input_files{j}, 'file') ~= 2
             input_files(j) = [];
         else
             j = j + 1;
@@ -29,8 +29,8 @@ function get_sepsis_score(input_zip_file, output_zip_file)
 
         fid = fopen(output_file, 'wt');
         fprintf(fid, 'PredictedProbability|PredictedLabel\n');
-        dlmwrite(output_file, [scores labels], 'delimiter', '|', '-append');
         fclose(fid);
+        dlmwrite(output_file, [scores labels], 'delimiter', '|', '-append');
     end
 
     % perform clean-up
