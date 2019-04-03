@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import numpy as np
 import os, shutil, zipfile
@@ -92,10 +94,10 @@ if __name__ == '__main__':
         file_name = os.path.split(input_files[i])[-1]
         output_file = os.path.join(tmp_output_dir, file_name)
         with open(output_file, 'w') as f:
-            f.write('PredictedProbability|PredictedLabel')
+            f.write('PredictedProbability|PredictedLabel\n')
             if data.size != 0:
                 for (s, l) in zip(scores, labels):
-                    f.write('\n%g|%d' % (s, l))
+                    f.write('%g|%d\n' % (s, l))
         output_zip.write(output_file)
 
     # perform clean-up

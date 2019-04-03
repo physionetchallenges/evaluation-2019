@@ -18,5 +18,9 @@ set -o pipefail
 
 RECORD=$1
 
+zip -q -0 input.zip "$RECORD.psv"
+
 # Example (Python)
-./get_sepsis_score.py "$RECORD"
+./get_sepsis_score.py input.zip output.zip
+
+unzip -p output.zip "*/$RECORD.psv" > "$RECORD.out"
