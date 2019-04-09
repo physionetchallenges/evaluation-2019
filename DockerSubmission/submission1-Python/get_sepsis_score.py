@@ -1,6 +1,6 @@
-import sys
-import numpy as np
-import os, shutil, zipfile
+#!/usr/bin/env python3
+
+import sys, numpy as np
 
 def get_sepsis_score(data):
     x_mean = np.array([
@@ -61,44 +61,16 @@ def read_challenge_data(input_file):
     return data
 
 if __name__ == '__main__':
-    # get input files
-    tmp_input_dir = 'tmp_inputs'
-    input_files = zipfile.ZipFile(sys.argv[1], 'r')
-    input_files.extractall(tmp_input_dir)
-    input_files.close()
-    input_files = sorted(f for f in input_files.namelist() if os.path.isfile(os.path.join(tmp_input_dir, f)))
+    # read data
+    data = read_challenge_data(sys.argv[1])
 
-    # make temporary output directory
-    tmp_output_dir = 'tmp_outputs'
-    try:
-        os.mkdir(tmp_output_dir)
-    except FileExistsError:
-        pass
+    # make predictions
+    if data.size != 0:
+        (scores, labels) = get_sepsis_score(data)
 
-    n = len(input_files)
-    output_zip = zipfile.ZipFile(sys.argv[2], 'w')
-
-    # make predictions for each input file
-    for i in range(n):
-        # read data
-        input_file = os.path.join(tmp_input_dir, input_files[i])
-        data = read_challenge_data(input_file)
-
-        # make predictions
+    # write results
+    with open(sys.argv[2], 'w') as f:
+        f.write('PredictedProbability|PredictedLabel\n')
         if data.size != 0:
-            (scores, labels) = get_sepsis_score(data)
-
-        # write results
-        file_name = os.path.split(input_files[i])[-1]
-        output_file = os.path.join(tmp_output_dir, file_name)
-        with open(output_file, 'w') as f:
-            f.write('PredictedProbability|PredictedLabel')
-            if data.size != 0:
-                for (s, l) in zip(scores, labels):
-                    f.write('\n%g|%d' % (s, l))
-        output_zip.write(output_file)
-
-    # perform clean-up
-    output_zip.close()
-    shutil.rmtree(tmp_input_dir)
-    shutil.rmtree(tmp_output_dir)
+            for (s, l) in zip(scores, labels):
+                f.write('%g|%d\n' % (s, l))

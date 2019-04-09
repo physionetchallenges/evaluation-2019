@@ -2,8 +2,10 @@
 
 The Python script `get_sepsis_score.py` makes predictions on the input data.
 
-To run this script, install the NumPy Python package and run
+To run this script, run
 
-        python get_sepsis_score.py training.zip predictions.zip
+        python get_sepsis_score.py input.psv output.psv
 
-which takes `training.zip` (a zip file of the training data files, which is available on the PhysioNet website) as input and returns `predictions.zip` (a zip file of the prediction files) as output.
+which takes a text file `input.psv` as input and returns a text file `output.psv` as output.
+
+The input files are provided in training database available on the PhysioNet website, and the format for the output files is described on the PhysioNet website.

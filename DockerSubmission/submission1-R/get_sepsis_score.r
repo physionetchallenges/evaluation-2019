@@ -71,40 +71,14 @@ read_challenge_data = function(input_file){
     return(data)
     }
 
-# load library and arguments
 args = commandArgs(trailingOnly=TRUE)
 
-# get input filenames
-tmp_input_dir = 'tmp_inputs'
-unzip(args[1], files = NULL, exdir = tmp_input_dir)
-input_files = sort(list.files(path = 'tmp_inputs', recursive = TRUE))
+# read data
+data = read_challenge_data(args[1])
 
-# make temporary output directory
-tmp_output_dir = 'tmp_outputs'
-dir.create(tmp_output_dir)
+# make predictions
+results = get_sepsis_score(data)
+colnames(results) = c('PredictedProbability', 'PredictedLabel')
 
-# generate scores
-n = length(input_files)
-output_files = list()
-
-for (i in 1:n){
-    # read data
-    input_file = file.path(tmp_input_dir, input_files[i])
-    data = read_challenge_data(input_file)
-
-    # make predictions
-    results = get_sepsis_score(data)
-    colnames(results) = c('PredictedProbability', 'PredictedLabel')
-
-    # write results
-    file_path = unlist(strsplit(input_file, .Platform$file.sep))
-    file_name = file_path[length(file_path)]
-    output_file = file.path(tmp_output_dir, file_name)
-    write.table(results, file = output_file, sep = '|', quote=FALSE, row.names = FALSE)
-    output_files[i] = output_file
-}
-
-# perform clean-up
-zip(args[2], files = unlist(output_files))
-unlink(tmp_input_dir, recursive=TRUE)
-unlink(tmp_output_dir, recursive=TRUE)
+# write results
+write.table(results, file = args[2], sep = '|', quote=FALSE, row.names = FALSE)
