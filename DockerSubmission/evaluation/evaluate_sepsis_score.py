@@ -53,20 +53,20 @@ def evaluate_scores(label_file, prediction_file):
     f.extractall(tmp_prediction_dir)
     f.close()
 
-    label_files = []
+    label_files = set()
     for root, parents, children in os.walk(tmp_label_dir):
         for child in children:
             label_file = os.path.join(root, child)
-            if os.path.isfile(label_file):
-                label_files.append(label_file)
+            if os.path.isfile(label_file) and not child.lower().startswith('.') and child.lower().endswith('psv'):
+                label_files.add(label_file)
     label_files = sorted(label_files)
 
-    prediction_files = []
+    prediction_files = set()
     for root, parents, children in os.walk(tmp_prediction_dir):
         for child in children:
             prediction_file = os.path.join(root, child)
-            if os.path.isfile(prediction_file):
-                prediction_files.append(prediction_file)
+            if os.path.isfile(prediction_file) and not child.lower().startswith('.') and child.lower().endswith('psv'):
+                prediction_files.add(prediction_file)
     prediction_files = sorted(prediction_files)
 
     if len(label_files) != len(prediction_files):
