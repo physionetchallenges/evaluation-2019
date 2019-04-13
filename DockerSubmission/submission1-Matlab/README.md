@@ -1,10 +1,10 @@
 # Instructions
 
-The R script `get_sepsis_score.r` makes predictions on the input data.
+The MATLAB script `get_sepsis_score.m` makes predictions on the input data.
 
-To run this script, run
+To run this script, start MATLAB and run
 
-        Rscript get_sepsis_score.r input.psv output.psv
+        get_sepsis_score('input.psv', 'output.psv')
 
 which takes a text file `input.psv` as input and returns a text file `output.psv` as output.
 
