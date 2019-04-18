@@ -1,11 +1,11 @@
 # Instructions
 
-The Python script `get_sepsis_score.py` makes predictions on the input data.
+The Python script `get_sepsis_score.py` makes sepsis predictions on clinical time-series data.  The Python script `driver.py` is a helper script that loads the data, calls `get_sepsis_score.py`, and saves the predictions.
 
-To run this script, run
+Please add your prediction code to the function `get_sepsis_score` in the `get_sepsis_score.py` script.  Please do *not* change the `driver.py` script or the format of the inputs and outputs for the `get_sepsis_score` function -- or we will be unable to evaluate your submission.
 
-        python get_sepsis_score.py input.psv output.psv
+You can run your prediction code on a patient cohort by running
 
-which takes a text file `input.psv` as input and returns a text file `output.psv` as output.
+        python driver.py input_directory output_directory
 
-The input files are provided in a training database available on the PhysioNet website, and the format for the output files is described on the PhysioNet website.
+where `input_directory` contains input data files and `output_directory` contains output prediction files.  The input files are provided in a training database available on the PhysioNet website, and the format for the output files is described on the PhysioNet website.

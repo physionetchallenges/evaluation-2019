@@ -1,18 +1,4 @@
-function get_sepsis_score(input_file, output_file)
-    % read data
-    data = read_challenge_data(input_file);
-
-    % make predictions
-    [scores, labels] = compute_sepsis_score(data);
-
-    % write results
-    fid = fopen(output_file, 'wt');
-    fprintf(fid, 'PredictedProbability|PredictedLabel\n');
-    fclose(fid);
-    dlmwrite(output_file, [scores labels], 'delimiter', '|', '-append');
-end
-
-function [scores, labels] = compute_sepsis_score(data)
+function [scores, labels] = get_sepsis_score(data)
     x_mean = [ ...
         83.8996 97.0520  36.8055  126.2240 86.2907 ...
         66.2070 18.7280  33.7373  -3.1923  22.5352 ...
@@ -61,23 +47,4 @@ function [scores, labels] = compute_sepsis_score(data)
 
     scores = 1 - exp(-l_exp_bx);
     labels = double([scores>0.45]);
-end
-
-function data = read_challenge_data(filename)
-    f = fopen(filename, 'rt');
-    try
-        l = fgetl(f);
-        column_names = strsplit(l, '|');
-        data = dlmread(filename, '|', 1, 0);
-    catch ex
-        fclose(f);
-        rethrow(ex);
-    end
-    fclose(f);
-
-    % ignore SepsisLabel column if present
-    if strcmp(column_names(end), 'SepsisLabel')
-        column_names = column_names(1:end-1);
-        data = data(:,1:end-1);
-    end
 end

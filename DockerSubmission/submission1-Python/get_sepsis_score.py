@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import sys, numpy as np
+import numpy as np
 
 def get_sepsis_score(data):
     x_mean = np.array([
@@ -44,33 +44,6 @@ def get_sepsis_score(data):
     l_exp_bx = pow(4 / rho, nu) * exp_bx
 
     scores = 1 - np.exp(-l_exp_bx)
-    labels = (scores > 0.45)
+    labels = scores > 0.45
+
     return (scores, labels)
-
-def read_challenge_data(input_file):
-    with open(input_file, 'r') as f:
-        header = f.readline().strip()
-        column_names = header.split('|')
-        data = np.loadtxt(f, delimiter='|')
-
-    # ignore SepsisLabel column if present
-    if column_names[-1] == 'SepsisLabel':
-        column_names = column_names[:-1]
-        data = data[:, :-1]
-
-    return data
-
-if __name__ == '__main__':
-    # read data
-    data = read_challenge_data(sys.argv[1])
-
-    # make predictions
-    if data.size != 0:
-        (scores, labels) = get_sepsis_score(data)
-
-    # write results
-    with open(sys.argv[2], 'w') as f:
-        f.write('PredictedProbability|PredictedLabel\n')
-        if data.size != 0:
-            for (s, l) in zip(scores, labels):
-                f.write('%g|%d\n' % (s, l))

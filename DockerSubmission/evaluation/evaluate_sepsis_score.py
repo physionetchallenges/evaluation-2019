@@ -1,28 +1,43 @@
 #!/usr/bin/env python
 
-# This file contains functions for evaluating scores for the 2019 PhysioNet/CinC
-# challenge.
+# This file contains functions for evaluating algorithms for the 2019 PhysioNet/
+# CinC Challenge. You can run it as follows:
 #
+#   python evaluate_scores.py labels.tar predictions.tar output.psv
+#
+# where 'labels.tar' is a collection of labels (or labeled data),
+# 'predictions.tar' is a collection of predictions on the data, and 'output.psv'
+# (optional) is a collection of scores.
+
+
+
 # The evaluate_scores function computes a normalized utility score for a cohort
 # of patients along with several traditional scoring metrics.
 #
 # Inputs:
-#   The first input is a tar file of pipe-delimited text files containing a
-#   binary vector of labels indicating whether a patient is not septic (0) or
-#   septic (1) for each time interval.
+#   'label_file' is a tar file of pipe-delimited text files containing a binary
+#   vector of labels for whether a patient is not septic (0) or septic (1) for
+#   each time interval.
 #
-#   The second input is a tar file of pipe-delimited text files, where the
+#   'prediction_file' is a tar file of pipe-delimited text files, where the
 #   first column of the file gives the predicted probability that the patient
 #   is septic at each time, and the second column of the file is a binarized
 #   version of this vector. Note that there must be a prediction for
 #   every label.
 #
-# Output:
-#   'output_file' is a pipe-delimited text file that gives AUROC, AUPRC,
-#   accuracy, F-measure, and utility scores for a cohort of patients.
+# Outputs:
+#   'auroc' is AUROC.
+#
+#   'auprc' is AUPRC.
+#
+#   'accuracy' is accuracy.
+#
+#   'f_measure' is F-measure.
+#
+#   'normalized_observed_utility' is our normalized utility measure.
 #
 # Example:
-#   python evaluate_scores.py labels.tar predictions.tar output.tar
+#   Omitted due to length. See below examples.
 
 import numpy as np, os, os.path, sys, shutil, tarfile
 
@@ -70,7 +85,7 @@ def evaluate_scores(label_file, prediction_file):
     prediction_files = sorted(prediction_files)
 
     if len(label_files) != len(prediction_files):
-        raise Exception('Numbers of labels and predictions must be the same.')
+        raise Exception('Numbers of label and prediction files must be the same.')
 
     if len(label_files) == len(prediction_files) == 0:
         raise Exception('No labels or predictions in archive files.')
@@ -88,7 +103,7 @@ def evaluate_scores(label_file, prediction_file):
 
         # Check labels and predictions for errors.
         if not (len(labels) == len(predictions) and len(predictions) == len(probabilities)):
-            raise Exception('Numbers of labels and predictions must be the same.')
+            raise Exception('Numbers of labels and predictions for a file must be the same.')
 
         num_records = len(labels)
 
@@ -100,14 +115,14 @@ def evaluate_scores(label_file, prediction_file):
                 raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
 
             if not 0 <= probabilities[i] <= 1:
-                raise Exception('Probabilities must satisfy 0 <= probability <= 1.')
+                raise Warning('Probabilities do not satisfy 0 <= probability <= 1.')
 
-        if 0<np.sum(predictions)<num_records:
+        if 0 < np.sum(predictions) < num_records:
             min_probability_positive = np.min(probabilities[predictions == 1])
             max_probability_negative = np.max(probabilities[predictions == 0])
 
             if min_probability_positive <= max_probability_negative:
-                raise Exception('Predictions are inconsistent with probabilities, i.e., a positive prediction has a lower (or equal) probability than a negative prediction.')
+                raise Warning('Predictions are inconsistent with probabilities, i.e., a positive prediction has a lower (or equal) probability than a negative prediction.')
 
         # Record labels and predictions.
         cohort_labels.append(labels)
@@ -152,7 +167,7 @@ def evaluate_scores(label_file, prediction_file):
     unnormalized_inaction_utility = np.sum(inaction_utilities)
 
     if not (unnormalized_worst_utility <= unnormalized_best_utility and unnormalized_inaction_utility <= unnormalized_best_utility):
-        raise Exception('Optimal utility must be higher than inaction utility.')
+        raise Warning('Optimal utility should be higher than inaction utility.')
 
     normalized_observed_utility = (unnormalized_observed_utility - unnormalized_inaction_utility) / (unnormalized_best_utility - unnormalized_inaction_utility)
 
@@ -234,15 +249,14 @@ def compute_auc(labels, predictions, check_errors=True):
 
         for prediction in predictions:
             if not 0 <= prediction <= 1:
-                raise Exception('Predictions must satisfy 0 <= prediction <= 1.')
+                raise Warning('Predictions do not satisfy 0 <= prediction <= 1.')
 
     # Find prediction thresholds.
     thresholds = np.unique(predictions)[::-1]
     if thresholds[0] != 1:
-        thresholds = np.concatenate((np.array([1]), thresholds))
-
-    if thresholds[-1] != 0:
-        thresholds = np.concatenate((thresholds, np.array([0])))
+        thresholds = np.insert(thresholds, 0, 1)
+    if thresholds[-1] == 0:
+        thresholds = thresholds[:-1]
 
     n = len(labels)
     m = len(thresholds)
@@ -253,7 +267,8 @@ def compute_auc(labels, predictions, check_errors=True):
     fn = np.zeros(m)
     tn = np.zeros(m)
 
-    # Find indices that sort predicted probabilities from largest to smallest.
+    # Find indices that sort the predicted probabilities from largest to
+    # smallest.
     idx = np.argsort(predictions)[::-1]
 
     i = 0
@@ -262,15 +277,15 @@ def compute_auc(labels, predictions, check_errors=True):
         if j == 0:
             tp[j] = 0
             fp[j] = 0
-            fn[j] = np.sum(labels == 1)
-            tn[j] = np.sum(labels == 0)
+            fn[j] = np.sum(labels)
+            tn[j] = n - fn[j]
         else:
             tp[j] = tp[j - 1]
             fp[j] = fp[j - 1]
             fn[j] = fn[j - 1]
             tn[j] = tn[j - 1]
 
-        # Update contingency table for i-th largest prediction probability.
+        # Update contingency table for i-th largest predicted probability.
         while i < n and predictions[idx[i]] >= thresholds[j]:
             if labels[idx[i]]:
                 tp[j] += 1
@@ -443,8 +458,8 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
 
     n = len(labels)
 
-    # Define slopes and intercept points for affine utility functions of the
-    # form u = m * t + b.
+    # Define slopes and intercept points for utility functions of the form
+    # u = m * t + b.
     m_1 = float(max_u_tp) / float(dt_optimal - dt_early)
     b_1 = -m_1 * dt_early
     m_2 = float(-max_u_tp) / float(dt_late - dt_optimal)
@@ -462,15 +477,15 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
                     u[t] = max(m_1 * (t - t_sepsis) + b_1, u_fp)
                 elif t <= t_sepsis + dt_late:
                     u[t] = m_2 * (t - t_sepsis) + b_2
+            # FP
+            elif not is_septic and predictions[t]:
+                u[t] = u_fp
             # FN
             elif is_septic and not predictions[t]:
                 if t <= t_sepsis + dt_optimal:
                     u[t] = 0
                 elif t <= t_sepsis + dt_late:
                     u[t] = m_3 * (t - t_sepsis) + b_3
-            # FP
-            elif not is_septic and predictions[t]:
-                u[t] = u_fp
             # TN
             elif not is_septic and not predictions[t]:
                 u[t] = u_tn

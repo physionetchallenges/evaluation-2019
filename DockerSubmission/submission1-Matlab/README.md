@@ -1,11 +1,11 @@
 # Instructions
 
-The MATLAB script `get_sepsis_score.m` makes predictions on the input data.
+The MATLAB script `get_sepsis_score.m` makes sepsis predictions on clinical time-series data.  The MATLAB script `driver.m` is a helper script that loads the data, calls `get_sepsis_score.m`, and saves the predictions.
 
-To run this script, start MATLAB and run
+Please add your prediction code to the function `get_sepsis_score` in the `get_sepsis_score.m` script.  Please do *not* change the `driver.m` script or the format of the inputs and outputs for the `get_sepsis_score` function -- or we will be unable to evaluate your submission.
 
-        get_sepsis_score('input.psv', 'output.psv')
+You can run your prediction code on a patient cohort by starting MATLAB and running
 
-which takes a text file `input.psv` as input and returns a text file `output.psv` as output.
+        driver(input_directory, output_directory)
 
-The input files are provided in a training database available on the PhysioNet website, and the format for the output files is described on the PhysioNet website.
+where `input_directory` contains input data files and `output_directory` contains output prediction files.  The input files are provided in a training database available on the PhysioNet website, and the format for the output files is described on the PhysioNet website.

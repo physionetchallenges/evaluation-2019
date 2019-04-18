@@ -20,16 +20,20 @@ get_sepsis_score = function(data){
     c_mean = c(60.8711, 0.5435, 0.0615, 0.0727, -59.6769, 28.4551)
     c_std = c(16.1887, 0.4981, 0.7968, 0.8029, 160.8846, 29.5367)
 
-    m = dim(data)[1]
-    n = dim(data)[2]
+    m = nrow(data)
     x = data[1:m, 1:34]
     c = data[1:m, 35:40]
 
     x_norm = matrix(, m, 34)
     c_norm = matrix(, m, 6)
-    for (i in 1:m){
-        x_norm[i, 1:34] = (x[i, 1:34] - x_mean) / x_std
-        c_norm[i, 1:6] = (c[i, 1:6] - c_mean) / c_std
+    if (m > 1){
+        for (i in 1:m){
+            x_norm[i, 1:34] = (x[i, 1:34] - x_mean) / x_std
+            c_norm[i, 1:6] = (c[i, 1:6] - c_mean) / c_std
+        }
+    } else{
+        x_norm[1:34] = (x[1:34] - x_mean) / x_std
+        c_norm[1:6] = (c[1:6] - c_mean) / c_std
     }
 
     x_norm[is.nan(x_norm)] = 0
@@ -55,30 +59,4 @@ get_sepsis_score = function(data){
     labels = (scores > 0.45)
     results = cbind(scores, labels)
     return(results)
-    }
-
-read_challenge_data = function(input_file){
-    data = data.matrix(read.csv(input_file, sep='|'))
-    column_names = colnames(data)
-
-    # ignore SepsisLabel column if present
-    m = dim(data)[1]
-    n = dim(data)[2]
-    if (column_names[n] == 'SepsisLabel'){
-        data = data[1:m, 1:n-1]
-    }
-
-    return(data)
-    }
-
-args = commandArgs(trailingOnly=TRUE)
-
-# read data
-data = read_challenge_data(args[1])
-
-# make predictions
-results = get_sepsis_score(data)
-colnames(results) = c('PredictedProbability', 'PredictedLabel')
-
-# write results
-write.table(results, file = args[2], sep = '|', quote=FALSE, row.names = FALSE)
+}

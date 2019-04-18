@@ -1,0 +1,69 @@
+function driver(input_directory, output_directory, enforce_causality)
+    % Parse arguments.
+    if nargin == 2 || enforce_causality == 0 || enforce_causality == false
+        enforce_causality = false;
+    else
+        enforce_causality = true;
+    end
+
+    % Find files.
+    files = {};
+    for f = dir(input_directory)'
+        if exist(fullfile(input_directory, f.name), 'file') == 2 && f.name(1) ~= '.' && all(f.name(end - 2 : end) == 'psv')
+            files{end + 1} = f.name;
+        end
+    end
+
+    % Iterate over files.
+    num_files = length(files);
+    for i = 1 : num_files
+        % Load data.
+        input_file = fullfile(input_directory, files{i});
+        data = load_challenge_data(input_file);
+
+        % Make predictions.
+        if ~enforce_causality
+            [scores, labels] = get_sepsis_score(data);
+        else
+            [num_records, ~] = size(data);
+            scores = zeros(num_records, 1);
+            labels = zeros(num_records, 1);
+            for t = 1 : num_records
+                current_data = data(1 : t, :);
+                [current_scores, current_labels] = get_sepsis_score(current_data);
+                scores(t) = current_scores(t);
+                labels(t) = current_labels(t);
+            end
+        end
+
+        % Save results.
+        output_file = fullfile(output_directory, files{i});
+        save_challenge_predictions(output_file, scores, labels);
+    end
+end
+
+function data = load_challenge_data(file)
+    f = fopen(file, 'rt');
+    try
+        l = fgetl(f);
+        column_names = strsplit(l, '|');
+        data = dlmread(file, '|', 1, 0);
+    catch ex
+        fclose(f);
+        rethrow(ex);
+    end
+    fclose(f);
+
+    % ignore SepsisLabel column if present
+    if strcmp(column_names(end), 'SepsisLabel')
+        column_names = column_names(1 : end-1);
+        data = data(:, 1 : end-1);
+    end
+end
+
+function save_challenge_predictions(file, scores, labels)
+    fid = fopen(file, 'wt');
+    fprintf(fid, 'PredictedProbability|PredictedLabel\n');
+    fclose(fid);
+    dlmwrite(file, [scores labels], 'delimiter', '|', '-append');
+end
