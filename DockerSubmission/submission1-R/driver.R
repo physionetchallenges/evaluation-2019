@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
 
-source("get_sepsis_score.r")
+source("get_sepsis_score.R")
 
 load_challenge_data = function(file){
     data = data.matrix(read.csv(file, sep='|'))
