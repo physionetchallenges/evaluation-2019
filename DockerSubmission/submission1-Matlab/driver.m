@@ -14,6 +14,10 @@ function driver(input_directory, output_directory, enforce_causality)
         end
     end
 
+    if ~exist(output_directory, 'dir')
+        mkdir(output_directory)
+    end
+
     % Iterate over files.
     num_files = length(files);
     for i = 1 : num_files
@@ -25,10 +29,10 @@ function driver(input_directory, output_directory, enforce_causality)
         if ~enforce_causality
             [scores, labels] = get_sepsis_score(data);
         else
-            [num_records, ~] = size(data);
-            scores = zeros(num_records, 1);
-            labels = zeros(num_records, 1);
-            for t = 1 : num_records
+            num_rows = size(data, 1);
+            scores = zeros(num_rows, 1);
+            labels = zeros(num_rows, 1);
+            for t = 1 : num_rows
                 current_data = data(1 : t, :);
                 [current_scores, current_labels] = get_sepsis_score(current_data);
                 scores(t) = current_scores(t);

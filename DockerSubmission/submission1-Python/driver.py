@@ -41,6 +41,9 @@ if __name__ == '__main__':
         if os.path.isfile(os.path.join(input_directory, f)) and not f.lower().startswith('.') and f.lower().endswith('psv'):
             files.append(f)
 
+    if not os.path.isdir(output_directory):
+        os.mkdir(output_directory)
+
     # Iterate over files.
     for file in files:
         # Load data.
@@ -51,10 +54,10 @@ if __name__ == '__main__':
         if not enforce_causality:
             scores, labels = get_sepsis_score(data)
         else:
-            num_records = len(data)
-            scores = np.zeros(num_records)
-            labels = np.zeros(num_records)
-            for t in range(num_records):
+            num_rows = len(data)
+            scores = np.zeros(num_rows)
+            labels = np.zeros(num_rows)
+            for t in range(num_rows):
                 current_data = data[:t+1]
                 current_scores, current_labels = get_sepsis_score(current_data)
                 scores[t] = current_scores[t]

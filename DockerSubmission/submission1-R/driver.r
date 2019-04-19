@@ -42,6 +42,10 @@ for (f in list.files(input_directory)){
     }
 }
 
+if (!dir.exists(output_directory)){
+    dir.create(output_directory)
+}
+
 # Iterate over files.
 for (file in files){
     # Load data.
@@ -52,10 +56,10 @@ for (file in files){
     if (!enforce_causality){
         predictions = get_sepsis_score(data)
     } else{
-        num_records = nrow(data)
-        predictions = matrix(, nrow(data), 2)
-        for (t in 1:num_records){
-            current_data = matrix(data[1:t, ], t, ncol(data))
+        num_rows = nrow(data)
+        predictions = matrix(, num_rows, 2)
+        for (t in 1 : num_rows){
+            current_data = matrix(data[1 : t, ], t, ncol(data))
             current_predictions = get_sepsis_score(current_data)
             predictions[t, ] = current_predictions[t, ]
         }
