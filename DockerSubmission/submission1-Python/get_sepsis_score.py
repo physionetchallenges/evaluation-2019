@@ -2,7 +2,10 @@
 
 import numpy as np
 
-def get_sepsis_score(data):
+def load_sepsis_model():
+    return None
+
+def get_sepsis_score(data, model):
     x_mean = np.array([
         83.8996, 97.0520,  36.8055,  126.2240, 86.2907,
         66.2070, 18.7280,  33.7373,  -3.1923,  22.5352,

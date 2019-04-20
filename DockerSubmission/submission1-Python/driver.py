@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np, os, sys
-from get_sepsis_score import get_sepsis_score
+from get_sepsis_score import load_sepsis_model, get_sepsis_score
 
 def load_challenge_data(file):
     with open(file, 'r') as f:
@@ -44,6 +44,9 @@ if __name__ == '__main__':
     if not os.path.isdir(output_directory):
         os.mkdir(output_directory)
 
+    # Load model.
+    model = load_sepsis_model()
+
     # Iterate over files.
     for file in files:
         # Load data.
@@ -52,14 +55,14 @@ if __name__ == '__main__':
 
         # Make predictions.
         if not enforce_causality:
-            scores, labels = get_sepsis_score(data)
+            scores, labels = get_sepsis_score(data, model)
         else:
             num_rows = len(data)
             scores = np.zeros(num_rows)
             labels = np.zeros(num_rows)
             for t in range(num_rows):
                 current_data = data[:t+1]
-                current_scores, current_labels = get_sepsis_score(current_data)
+                current_scores, current_labels = get_sepsis_score(current_data, model)
                 scores[t] = current_scores[t]
                 labels[t] = current_labels[t]
 
