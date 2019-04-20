@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
 
-get_sepsis_score = function(data){
+get_sepsis_score = function(data, model){
     x_mean = c(
         83.8996, 97.0520,  36.8055,  126.2240, 86.2907,
         66.2070, 18.7280,  33.7373,  -3.1923,  22.5352,
@@ -21,20 +21,11 @@ get_sepsis_score = function(data){
     c_std = c(16.1887, 0.4981, 0.7968, 0.8029, 160.8846, 29.5367)
 
     m = nrow(data)
-    x = data[1:m, 1:34]
-    c = data[1:m, 35:40]
+    x = data[m, 1:34]
+    c = data[m, 35:40]
 
-    x_norm = matrix(, m, 34)
-    c_norm = matrix(, m, 6)
-    if (m > 1){
-        for (i in 1:m){
-            x_norm[i, 1:34] = (x[i, 1:34] - x_mean) / x_std
-            c_norm[i, 1:6] = (c[i, 1:6] - c_mean) / c_std
-        }
-    } else{
-        x_norm[1:34] = (x[1:34] - x_mean) / x_std
-        c_norm[1:6] = (c[1:6] - c_mean) / c_std
-    }
+    x_norm = (x[1:34] - x_mean) / x_std
+    c_norm = (c[1:6] - c_mean) / c_std
 
     x_norm[is.nan(x_norm)] = 0
     c_norm[is.nan(c_norm)] = 0
@@ -51,12 +42,16 @@ get_sepsis_score = function(data){
     rho = 7.8521
     nu = 1.0389
 
-    xstar = cbind(x_norm, c_norm)
+    xstar = c(x_norm, c_norm)
     exp_bx = exp(xstar %*% beta)
     l_exp_bx = (4.0 / rho) ** nu * exp_bx
 
-    scores = 1 - exp(-l_exp_bx)
-    labels = (scores > 0.45)
-    results = cbind(scores, labels)
-    return(results)
+    score = 1 - exp(-l_exp_bx)
+    label = score > 0.45
+    predictions = c(score, label)
+    return(predictions)
+}
+
+load_sepsis_model = function(){
+    return(NULL)
 }

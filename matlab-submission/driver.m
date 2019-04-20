@@ -1,11 +1,4 @@
-function driver(input_directory, output_directory, enforce_causality)
-    % Parse arguments.
-    if nargin == 2 || enforce_causality == 0 || enforce_causality == false
-        enforce_causality = false;
-    else
-        enforce_causality = true;
-    end
-
+function driver(input_directory, output_directory)
     % Find files.
     files = {};
     for f = dir(input_directory)'
@@ -18,26 +11,25 @@ function driver(input_directory, output_directory, enforce_causality)
         mkdir(output_directory)
     end
 
+    % Load model.
+    model = load_sepsis_model();
+
     % Iterate over files.
     num_files = length(files);
-    for i = 1 : num_files
+    for i = 1:num_files
         % Load data.
         input_file = fullfile(input_directory, files{i});
         data = load_challenge_data(input_file);
 
         % Make predictions.
-        if ~enforce_causality
-            [scores, labels] = get_sepsis_score(data);
-        else
-            num_rows = size(data, 1);
-            scores = zeros(num_rows, 1);
-            labels = zeros(num_rows, 1);
-            for t = 1 : num_rows
-                current_data = data(1 : t, :);
-                [current_scores, current_labels] = get_sepsis_score(current_data);
-                scores(t) = current_scores(t);
-                labels(t) = current_labels(t);
-            end
+        num_rows = size(data, 1);
+        scores = zeros(num_rows, 1);
+        labels = zeros(num_rows, 1);
+        for t = 1:num_rows
+            current_data = data(1:t, :);
+            [current_score, current_label] = get_sepsis_score(current_data, model);
+            scores(t) = current_score;
+            labels(t) = current_label;
         end
 
         % Save results.
@@ -58,7 +50,7 @@ function data = load_challenge_data(file)
     end
     fclose(f);
 
-    % ignore SepsisLabel column if present
+    % Ignore SepsisLabel column if present.
     if strcmp(column_names(end), 'SepsisLabel')
         column_names = column_names(1 : end-1);
         data = data(:, 1 : end-1);

@@ -6,7 +6,7 @@ load_challenge_data = function(file){
     data = data.matrix(read.csv(file, sep='|'))
     column_names = colnames(data)
 
-    # ignore SepsisLabel column if present
+    # Ignore SepsisLabel column if present.
     if (column_names[ncol(data)] == 'SepsisLabel'){
         data = data[, 1:ncol(data)-1]
     }
@@ -21,18 +21,12 @@ save_challenge_predictions = function(file, predictions){
 
 # Parse arguments.
 args = commandArgs(trailingOnly=TRUE)
-if (length(args) != 2 && length(args) != 3){
+if (length(args) != 2){
     stop('Include the input and output directories as arguments, e.g., Rscript driver.r input output.')
 }
 
 input_directory = args[1]
 output_directory = args[2]
-
-if (length(args) == 2 || args[3] == '0' || args[3] == 'F' || args[3] == 'FALSE'){
-    enforce_causality = FALSE
-} else{
-    enforce_causality = TRUE
-}
 
 # Find files.
 files = c()
@@ -46,6 +40,9 @@ if (!dir.exists(output_directory)){
     dir.create(output_directory)
 }
 
+# Load model.
+model = load_sepsis_model()
+
 # Iterate over files.
 for (file in files){
     # Load data.
@@ -53,16 +50,13 @@ for (file in files){
     data = load_challenge_data(input_file)
 
     # Make predictions.
-    if (!enforce_causality){
-        predictions = get_sepsis_score(data)
-    } else{
-        num_rows = nrow(data)
-        predictions = matrix(, num_rows, 2)
-        for (t in 1 : num_rows){
-            current_data = matrix(data[1 : t, ], t, ncol(data))
-            current_predictions = get_sepsis_score(current_data)
-            predictions[t, ] = current_predictions[t, ]
-        }
+    num_rows = nrow(data)
+    num_cols = ncol(data)
+    predictions = matrix(, num_rows, 2)
+    for (t in 1:num_rows){
+        current_data = matrix(data[1:t,], t, num_cols)
+        current_predictions = get_sepsis_score(current_data, model)
+        predictions[t,] = current_predictions
     }
 
     # Save results.

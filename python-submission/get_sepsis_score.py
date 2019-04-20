@@ -2,9 +2,6 @@
 
 import numpy as np
 
-def load_sepsis_model():
-    return None
-
 def get_sepsis_score(data, model):
     x_mean = np.array([
         83.8996, 97.0520,  36.8055,  126.2240, 86.2907,
@@ -25,8 +22,8 @@ def get_sepsis_score(data, model):
     c_mean = np.array([60.8711, 0.5435, 0.0615, 0.0727, -59.6769, 28.4551])
     c_std = np.array([16.1887, 0.4981, 0.7968, 0.8029, 160.8846, 29.5367])
 
-    x = data[:, 0:34]
-    c = data[:, 34:40]
+    x = data[-1, 0:34]
+    c = data[-1, 34:40]
     x_norm = np.nan_to_num((x - x_mean) / x_std)
     c_norm = np.nan_to_num((c - c_mean) / c_std)
 
@@ -42,11 +39,14 @@ def get_sepsis_score(data, model):
     rho = 7.8521
     nu = 1.0389
 
-    xstar = np.concatenate((x_norm, c_norm), axis=1)
-    exp_bx = np.exp(np.matmul(xstar, beta))
+    xstar = np.concatenate((x_norm, c_norm))
+    exp_bx = np.exp(np.dot(xstar, beta))
     l_exp_bx = pow(4 / rho, nu) * exp_bx
 
-    scores = 1 - np.exp(-l_exp_bx)
-    labels = scores > 0.45
+    score = 1 - np.exp(-l_exp_bx)
+    label = score > 0.45
 
-    return (scores, labels)
+    return score, label
+
+def load_sepsis_model():
+    return None
