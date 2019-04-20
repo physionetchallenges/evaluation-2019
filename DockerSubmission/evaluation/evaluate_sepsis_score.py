@@ -3,13 +3,13 @@
 # This file contains functions for evaluating algorithms for the 2019 PhysioNet/
 # CinC Challenge. You can run it as follows:
 #
-#   python evaluate_scores.py labels.tar predictions.tar output.psv
+#   python evaluate_scores.py labels predictions scores.psv
 #
-# where 'labels.tar' is a collection of labels (or labeled data),
-# 'predictions.tar' is a collection of predictions on the data, and 'output.psv'
-# (optional) is a collection of scores.
+# where 'labels' is a directory containing files with labels, 'predictions' is a
+# directory containing files with predictions, and 'scores.psv' (optional) is a
+# collection of scores for the predictions.
 
-
+################################################################################
 
 # The evaluate_scores function computes a normalized utility score for a cohort
 # of patients along with several traditional scoring metrics.
@@ -26,22 +26,25 @@
 #   every label.
 #
 # Outputs:
-#   'auroc' is AUROC.
+#   'auroc' is the area under the receiver operating characteristic curve
+#   (AUROC).
 #
-#   'auprc' is AUPRC.
+#   'auprc' is the area under the precision recall curve (AUPRC).
 #
 #   'accuracy' is accuracy.
 #
 #   'f_measure' is F-measure.
 #
-#   'normalized_observed_utility' is our normalized utility measure.
+#   'normalized_observed_utility' is a normalized utility-based measure that we
+#   created for the Challenge. This score is normalized so that a perfect score
+#   is 1 and no positive predictions is 0.
 #
 # Example:
-#   Omitted due to length. See below examples.
+#   Omitted due to length. See the below examples.
 
-import numpy as np, os, os.path, sys, shutil, tarfile
+import numpy as np, os, os.path, sys
 
-def evaluate_scores(label_file, prediction_file):
+def evaluate_scores(label_directory, prediction_directory):
     # Set parameters.
     label_header       = 'SepsisLabel'
     prediction_header  = 'PredictedLabel'
@@ -57,38 +60,22 @@ def evaluate_scores(label_file, prediction_file):
     u_tn     = 0
 
     # Find label and prediction files.
-    tmp_label_dir = 'tmp_labels'
-    tmp_prediction_dir = 'tmp_predictions'
-
-    f = tarfile.open(label_file)
-    f.extractall(tmp_label_dir)
-    f.close()
-
-    f = tarfile.open(prediction_file)
-    f.extractall(tmp_prediction_dir)
-    f.close()
-
-    label_files = set()
-    for root, parents, children in os.walk(tmp_label_dir):
-        for child in children:
-            label_file = os.path.join(root, child)
-            if os.path.isfile(label_file) and not child.lower().startswith('.') and child.lower().endswith('psv'):
-                label_files.add(label_file)
+    label_files = []
+    for f in os.listdir(label_directory):
+        g = os.path.join(label_directory, f)
+        if os.path.isfile(g) and not f.lower().startswith('.') and f.lower().endswith('psv'):
+            label_files.append(g)
     label_files = sorted(label_files)
 
-    prediction_files = set()
-    for root, parents, children in os.walk(tmp_prediction_dir):
-        for child in children:
-            prediction_file = os.path.join(root, child)
-            if os.path.isfile(prediction_file) and not child.lower().startswith('.') and child.lower().endswith('psv'):
-                prediction_files.add(prediction_file)
+    prediction_files = []
+    for f in os.listdir(prediction_directory):
+        g = os.path.join(prediction_directory, f)
+        if os.path.isfile(g) and not f.lower().startswith('.') and f.lower().endswith('psv'):
+            prediction_files.append(g)
     prediction_files = sorted(prediction_files)
 
     if len(label_files) != len(prediction_files):
         raise Exception('Numbers of label and prediction files must be the same.')
-
-    if len(label_files) == len(prediction_files) == 0:
-        raise Exception('No labels or predictions in archive files.')
 
     # Load labels and predictions.
     num_files            = len(label_files)
@@ -105,9 +92,9 @@ def evaluate_scores(label_file, prediction_file):
         if not (len(labels) == len(predictions) and len(predictions) == len(probabilities)):
             raise Exception('Numbers of labels and predictions for a file must be the same.')
 
-        num_records = len(labels)
+        num_rows = len(labels)
 
-        for i in range(num_records):
+        for i in range(num_rows):
             if labels[i] not in (0, 1):
                 raise Exception('Labels must satisfy label == 0 or label == 1.')
 
@@ -117,7 +104,7 @@ def evaluate_scores(label_file, prediction_file):
             if not 0 <= probabilities[i] <= 1:
                 raise Warning('Probabilities do not satisfy 0 <= probability <= 1.')
 
-        if 0 < np.sum(predictions) < num_records:
+        if 0 < np.sum(predictions) < num_rows:
             min_probability_positive = np.min(probabilities[predictions == 1])
             max_probability_negative = np.max(probabilities[predictions == 0])
 
@@ -145,15 +132,15 @@ def evaluate_scores(label_file, prediction_file):
 
     for k in range(num_files):
         labels = cohort_labels[k]
-        num_records          = len(labels)
+        num_rows          = len(labels)
         observed_predictions = cohort_predictions[k]
-        best_predictions     = np.zeros(num_records)
-        worst_predictions    = np.zeros(num_records)
-        inaction_predictions = np.zeros(num_records)
+        best_predictions     = np.zeros(num_rows)
+        worst_predictions    = np.zeros(num_rows)
+        inaction_predictions = np.zeros(num_rows)
 
         if np.any(labels):
             t_sepsis = np.argmax(labels) - dt_optimal
-            best_predictions[max(0, t_sepsis + dt_early) : min(t_sepsis + dt_late + 1, num_records)] = 1
+            best_predictions[max(0, t_sepsis + dt_early) : min(t_sepsis + dt_late + 1, num_rows)] = 1
         worst_predictions = 1 - best_predictions
 
         observed_utilities[k] = compute_prediction_utility(labels, observed_predictions, dt_early, dt_optimal, dt_late, max_u_tp, min_u_fn, u_fp, u_tn)
@@ -166,13 +153,7 @@ def evaluate_scores(label_file, prediction_file):
     unnormalized_worst_utility    = np.sum(worst_utilities)
     unnormalized_inaction_utility = np.sum(inaction_utilities)
 
-    if not (unnormalized_worst_utility <= unnormalized_best_utility and unnormalized_inaction_utility <= unnormalized_best_utility):
-        raise Warning('Optimal utility should be higher than inaction utility.')
-
     normalized_observed_utility = (unnormalized_observed_utility - unnormalized_inaction_utility) / (unnormalized_best_utility - unnormalized_inaction_utility)
-
-    shutil.rmtree(tmp_label_dir)
-    shutil.rmtree(tmp_prediction_dir)
 
     return auroc, auprc, accuracy, f_measure, normalized_observed_utility
 
@@ -220,11 +201,11 @@ def load_column(filename, header, delimiter):
 #   len(predictions).
 #
 # Outputs:
-#   'auroc' is a scalar that gives the AUROC of the classifier using its
+#   'auroc' is a scalar that gives the AUROC of the algorithm using its
 #   predicted probabilities, where specificity is interpolated for intermediate
 #   sensitivity values.
 #
-#   'auprc' is a scalar that gives the AUPRC of the classifier using its
+#   'auprc' is a scalar that gives the AUPRC of the algorithm using its
 #   predicted probabilities, where precision is a piecewise constant function of
 #   recall.
 #
@@ -319,9 +300,9 @@ def compute_auc(labels, predictions, check_errors=True):
         else:
             npv[j] = 1
 
-    # Compute AUROC as the area under a piecewise linear function of TPR /
+    # Compute AUROC as the area under a piecewise linear function with TPR /
     # sensitivity (x-axis) and TNR / specificity (y-axis) and AUPRC as the area
-    # under a piecewise constant of TPR / recall (x-axis) and PPV / precision
+    # under a piecewise constant with TPR / recall (x-axis) and PPV / precision
     # (y-axis).
     auroc = 0
     auprc = 0
@@ -345,10 +326,10 @@ def compute_auc(labels, predictions, check_errors=True):
 #   prediction for every label, i.e, len(labels) == len(predictions).
 #
 # Output:
-#   'accuracy' is a scalar that gives the accuracy of the classifier using its
+#   'accuracy' is a scalar that gives the accuracy of the predictions using its
 #   binarized predictions.
 #
-#   'f_measure' is a scalar that gives the F-measure of the classifier using its
+#   'f_measure' is a scalar that gives the F-measure of the predictions using its
 #   binarized predictions.
 #
 # Example:
@@ -419,7 +400,7 @@ def compute_accuracy_f_measure(labels, predictions, check_errors=True):
 #
 # Output:
 #   'utility' is a scalar that gives the total time-dependent utility of the
-#   classifier using its binarized predictions.
+#   algorithm using its binarized predictions.
 #
 # Example:
 #   In [1]: labels = [0, 0, 0, 0, 1, 1]

@@ -4,6 +4,6 @@ The Python script `evaluate_sepsis_score.py` evaluates predictions on the input 
 
 To run this script, install the NumPy Python package and run
 
-        python evaluate_sepsis_score.py labels.tar predictions.tar scores.psv
+        python evaluate_sepsis_score.py labels predictions scores.psv
 
-which takes `labels.tar` (a tar archive file of the data/labels files, which are available on the PhysioNet website) and `predictions.tar` (a tar archive file of the prediction files, which are described on the PhysioNet website) as input and returns `scores.psv` as output.
+where `labels` is a directory containing files with labels, such as the training data on the PhysioNet website; `predictions` is a directory containing files with predictions produced by your algorithm; and `scores.psv` (optional) is a collection of scores for the predictions (described on the PhysioNet website). We use the utility score for the Challenge.
