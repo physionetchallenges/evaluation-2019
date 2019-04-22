@@ -1,18 +1,4 @@
-function get_sepsis_score(input_file, output_file)
-    % read data
-    data = read_challenge_data(input_file);
-
-    % make predictions
-    [scores, labels] = compute_sepsis_score(data);
-
-    % write results
-    fid = fopen(output_file, 'wt');
-    fprintf(fid, 'PredictedProbability|PredictedLabel\n');
-    fclose(fid);
-    dlmwrite(output_file, [scores labels], 'delimiter', '|', '-append');
-end
-
-function [scores, labels] = compute_sepsis_score(data)
+function [score, label] = get_sepsis_score(data, model)
     x_mean = [ ...
         83.8996 97.0520  36.8055  126.2240 86.2907 ...
         66.2070 18.7280  33.7373  -3.1923  22.5352 ...
@@ -32,13 +18,12 @@ function [scores, labels] = compute_sepsis_score(data)
     c_mean = [60.8711 0.5435 0.0615 0.0727 -59.6769 28.4551];
     c_std = [16.1887 0.4981 0.7968 0.8029 160.8846 29.5367];
 
-    x = data(:, 1:34);
-    c = data(:, 35:40);
+    m = size(data, 1);
+    x = data(m, 1:34);
+    c = data(m, 35:40);
 
-    [m, n] = size(x);
-    [r, s] = size(c);
-    x_norm = (x - repmat(x_mean, m, 1))./repmat(x_std, m, 1);
-    c_norm = (c - repmat(c_mean, r, 1))./repmat(c_std, r, 1);
+    x_norm = (x - x_mean)./x_std;
+    c_norm = (c - c_mean)./c_std;
 
     x_norm(isnan(x_norm)) = 0;
     c_norm(isnan(c_norm)) = 0;
@@ -56,28 +41,9 @@ function [scores, labels] = compute_sepsis_score(data)
     model.nu = 1.0389;
 
     xstar = [x_norm c_norm];
-    exp_bx = exp(xstar*model.beta);
-    l_exp_bx = (4/model.rho).^model.nu * exp_bx;
+    exp_bx = exp(xstar * model.beta);
+    l_exp_bx = (4 / model.rho).^model.nu * exp_bx;
 
-    scores = 1 - exp(-l_exp_bx);
-    labels = double([scores>0.45]);
-end
-
-function data = read_challenge_data(filename)
-    f = fopen(filename, 'rt');
-    try
-        l = fgetl(f);
-        column_names = strsplit(l, '|');
-        data = dlmread(filename, '|', 1, 0);
-    catch ex
-        fclose(f);
-        rethrow(ex);
-    end
-    fclose(f);
-
-    % ignore SepsisLabel column if present
-    if strcmp(column_names(end), 'SepsisLabel')
-        column_names = column_names(1:end-1);
-        data = data(:,1:end-1);
-    end
+    score = 1 - exp(-l_exp_bx);
+    label = double(score > 0.45);
 end
