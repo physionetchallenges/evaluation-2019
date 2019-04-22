@@ -1,3 +1,7 @@
+# Overview
+
+This repository now contains evaluation code for the PhysioNet/CinC Challenge 2019.  Looking for our MATLAB, Python, and R sample prediction code?  See <https://github.com/physionetchallenges>.
+
 # Instructions
 
 The Python script `evaluate_sepsis_score.py` evaluates predictions on the input data.
