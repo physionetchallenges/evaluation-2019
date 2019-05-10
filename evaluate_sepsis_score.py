@@ -15,14 +15,14 @@
 # of patients along with several traditional scoring metrics.
 #
 # Inputs:
-#   'label_file' is a tar file of pipe-delimited text files containing a binary
-#   vector of labels for whether a patient is not septic (0) or septic (1) for
-#   each time interval.
+#   'label_directory' is a directory of pipe-delimited text files containing a
+#   binary vector of labels for whether a patient is not septic (0) or septic
+#   (1) for each time interval.
 #
-#   'prediction_file' is a tar file of pipe-delimited text files, where the
-#   first column of the file gives the predicted probability that the patient
-#   is septic at each time, and the second column of the file is a binarized
-#   version of this vector. Note that there must be a prediction for
+#   'prediction_directory' is a directory of pipe-delimited text files, where
+#   the first column of the file gives the predicted probability that the
+#   patient is septic at each time, and the second column of the file is a
+#   binarized version of this vector. Note that there must be a prediction for
 #   every label.
 #
 # Outputs:
@@ -42,7 +42,7 @@
 # Example:
 #   Omitted due to length. See the below examples.
 
-import numpy as np, os, os.path, sys
+import numpy as np, os, os.path, sys, warnings
 
 def evaluate_scores(label_directory, prediction_directory):
     # Set parameters.
@@ -102,14 +102,14 @@ def evaluate_scores(label_directory, prediction_directory):
                 raise Exception('Predictions must satisfy prediction == 0 or prediction == 1.')
 
             if not 0 <= probabilities[i] <= 1:
-                raise Warning('Probabilities do not satisfy 0 <= probability <= 1.')
+                warnings.warn('Probabilities do not satisfy 0 <= probability <= 1.')
 
         if 0 < np.sum(predictions) < num_rows:
             min_probability_positive = np.min(probabilities[predictions == 1])
             max_probability_negative = np.max(probabilities[predictions == 0])
 
             if min_probability_positive <= max_probability_negative:
-                raise Warning('Predictions are inconsistent with probabilities, i.e., a positive prediction has a lower (or equal) probability than a negative prediction.')
+                warnings.warn('Predictions are inconsistent with probabilities, i.e., a positive prediction has a lower (or equal) probability than a negative prediction.')
 
         # Record labels and predictions.
         cohort_labels.append(labels)
@@ -230,7 +230,7 @@ def compute_auc(labels, predictions, check_errors=True):
 
         for prediction in predictions:
             if not 0 <= prediction <= 1:
-                raise Warning('Predictions do not satisfy 0 <= prediction <= 1.')
+                warnings.warn('Predictions do not satisfy 0 <= prediction <= 1.')
 
     # Find prediction thresholds.
     thresholds = np.unique(predictions)[::-1]
