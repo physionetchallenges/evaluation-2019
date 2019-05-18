@@ -3,7 +3,7 @@
 # This file contains functions for evaluating algorithms for the 2019 PhysioNet/
 # CinC Challenge. You can run it as follows:
 #
-#   python evaluate_scores.py labels predictions scores.psv
+#   python evaluate_sepsis_score.py labels predictions scores.psv
 #
 # where 'labels' is a directory containing files with labels, 'predictions' is a
 # directory containing files with predictions, and 'scores.psv' (optional) is a
@@ -44,7 +44,7 @@
 
 import numpy as np, os, os.path, sys, warnings
 
-def evaluate_scores(label_directory, prediction_directory):
+def evaluate_sepsis_score(label_directory, prediction_directory):
     # Set parameters.
     label_header       = 'SepsisLabel'
     prediction_header  = 'PredictedLabel'
@@ -475,7 +475,7 @@ def compute_prediction_utility(labels, predictions, dt_early=-12, dt_optimal=-6,
     return np.sum(u)
 
 if __name__ == '__main__':
-    auroc, auprc, accuracy, f_measure, utility = evaluate_scores(sys.argv[1], sys.argv[2])
+    auroc, auprc, accuracy, f_measure, utility = evaluate_sepsis_score(sys.argv[1], sys.argv[2])
 
     output_string = 'AUROC|AUPRC|Accuracy|F-measure|Utility\n{}|{}|{}|{}|{}'.format(auroc, auprc, accuracy, f_measure, utility)
     if len(sys.argv) > 3:
